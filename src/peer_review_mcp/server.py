@@ -1,8 +1,5 @@
-import logging
 from mcp.server.fastmcp import FastMCP
 from peer_review_mcp.orchestrator.central_orchestrator import CentralOrchestrator
-
-logging.basicConfig(level=logging.INFO)
 
 mcp = FastMCP(
     "Peer Review MCP",

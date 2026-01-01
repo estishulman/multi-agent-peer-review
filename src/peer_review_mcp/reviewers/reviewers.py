@@ -11,7 +11,6 @@ class Reviewer:
         raise NotImplementedError
 
 class OpenAIReviewer(Reviewer):
-    print(">>> OPENAI REVIEWER CALLED <<<")
     name = "openai_correctness"
     model = "gpt-4.1-mini"
 
