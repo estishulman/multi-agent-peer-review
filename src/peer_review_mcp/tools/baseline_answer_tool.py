@@ -8,5 +8,10 @@ class BaselineAnswerTool:
 
     def answer(self, *, question: str) -> str:
         prompt = BASELINE_ANSWER_PROMPT.format(question=question)
-        return self.client.generate(prompt)
-
+        out = self.client.generate(prompt)
+        if not out:
+            # Local fallback summary to avoid empty responses in offline/tests
+            return (
+                "An answer could not be generated at this time. Please try again later."
+            )
+        return out

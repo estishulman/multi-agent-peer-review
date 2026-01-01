@@ -25,3 +25,10 @@ Confidence does not necessarily imply correctness
 By introducing explicit review and orchestration layers, the system promotes careful, evidence-aware answer generation.
 
 High-Level Architecture
+
+# Testing & Coverage 
+
+The project includes an automated test suite using pytest.
+Tests focus on core orchestration logic, decision paths, and fallback behavior to ensure reliable agent execution.
+
+
