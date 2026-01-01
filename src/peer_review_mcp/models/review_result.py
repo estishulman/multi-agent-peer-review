@@ -12,3 +12,4 @@ ReviewMode = Literal["validate", "polish"]
 class ReviewResult:
     mode: ReviewMode
     items: List[str]
+

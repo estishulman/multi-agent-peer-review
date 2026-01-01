@@ -9,3 +9,4 @@ class BaselineAnswerTool:
     def answer(self, *, question: str) -> str:
         prompt = BASELINE_ANSWER_PROMPT.format(question=question)
         return self.client.generate(prompt)
+

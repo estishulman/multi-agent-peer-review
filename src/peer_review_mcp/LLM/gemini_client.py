@@ -1,3 +1,10 @@
+import os
+import certifi
+
+os.environ["GRPC_DEFAULT_SSL_ROOTS_FILE_PATH"] = certifi.where()
+os.environ["SSL_CERT_FILE"] = certifi.where()
+os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
+
 from google import genai
 from ..config import GEMINI_API_KEY, DEFAULT_MODEL
 
@@ -12,4 +19,6 @@ class GeminiClient:
             contents=prompt,
         )
         return response.text
+
+
 
