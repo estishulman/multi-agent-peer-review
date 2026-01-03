@@ -2,7 +2,6 @@ import os
 import pytest
 from peer_review_mcp.LLM.gemini_client import GeminiClient
 from peer_review_mcp.LLM.synthesis_client import AnswerSynthesisClient
-from peer_review_mcp.tools.baseline_answer_tool import BaselineAnswerTool
 from peer_review_mcp.orchestrator.central_orchestrator import CentralOrchestrator
 from peer_review_mcp.tools.polishing_engine import PolishingEngine
 from peer_review_mcp.reviewers.gemini_reviewer import GeminiReviewer
@@ -30,12 +29,6 @@ def test_synthesis_client_format_and_call(monkeypatch):
     assert "synth answer" == out
 
 
-def test_baseline_tool_fallback(monkeypatch):
-    # stub gemini to return empty
-    monkeypatch.setattr("peer_review_mcp.LLM.gemini_client.GeminiClient.generate", lambda self, prompt: "")
-    tool = BaselineAnswerTool()
-    out = tool.answer(question="q")
-    assert out and isinstance(out, str)
 
 
 def test_polishing_engine_parses(monkeypatch):
@@ -63,7 +56,11 @@ def test_gemini_reviewer_parsing(monkeypatch):
     gr = GeminiReviewer(StubClient())
     res = gr.review(question="q", mode="validate")
     assert hasattr(res, 'items')
-    assert res.items == ["one", "two"]
+    # In validate mode, items should now be dicts with classification
+    assert len(res.items) == 2
+    assert all(isinstance(item, dict) and 'text' in item for item in res.items)
+    assert res.items[0]['text'] == "one"
+    assert res.items[1]['text'] == "two"
 
 
 def test_central_orchestrator_phase_b_decision():

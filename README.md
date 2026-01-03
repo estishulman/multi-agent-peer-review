@@ -26,9 +26,39 @@ By introducing explicit review and orchestration layers, the system promotes car
 
 High-Level Architecture
 
-# Testing & Coverage 
+# Testing & Coverage
 
 The project includes an automated test suite using pytest.
 Tests focus on core orchestration logic, decision paths, and fallback behavior to ensure reliable agent execution.
 
 
+## Quick Start
+
+### 1. Install
+```bash
+git clone https://github.com/estishulman/peer-review-mcp.git
+cd peer-review-mcp
+pip install -e .
+```
+
+### 2. Set Environment Variables
+```bash
+export GOOGLE_API_KEY="your-key"
+export SYNTHESIS_API_KEY="your-key"
+```
+
+### 3. Start Server
+```bash
+python -m peer_review_mcp.server
+```
+
+### 4. Configure Agent
+```json
+{
+  "mcp_servers": {
+    "peer-review": {
+      "command": "python",
+      "args": ["-m", "peer_review_mcp.server"]
+    }
+  }
+}
