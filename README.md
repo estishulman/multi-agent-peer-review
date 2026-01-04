@@ -23,9 +23,9 @@ Answer generation is treated as unsafe by default:
 Explicit review and orchestration layers promote careful, evidence-aware responses.
 
 ## Challenges & Solutions
-- Avoiding chained misguidance while maintaining progressive refinement and polishing of answers.
-- Balancing review depth with latency and cost constraints.
-- Providing sufficient background context to reviewers without relying on full conversational history.
+- Avoiding chained misguidance while maintaining progressive refinement of the answer draft: Phase A generates question-level review points first, and Phase B critiques the answer draft only when risk signals appear.
+- Balancing review depth with latency and cost constraints: the orchestrator applies quality gates, and the agent sends only complex questions or user-requested cases to the server.
+- Providing sufficient background context to reviewers without relying on full conversational history: the agent supplies a concise, scoped context summary.
 
 ## Context Handling
 Reviewers operate on an agent-generated context summary to ensure deterministic and well-scoped evaluations.
