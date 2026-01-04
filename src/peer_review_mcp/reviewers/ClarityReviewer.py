@@ -1,4 +1,4 @@
-from ..reviewers.base import BaseReviewer
+from .base import BaseReviewer
 from ..models.review_result import ReviewResult, ReviewMode
 from ..LLM.gemini_client import GeminiClient
 from ..prompts.clarity_validation import CLARITY_VALIDATION_PROMPT
@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class GeminiClarityReviewer(BaseReviewer):
+class ClarityReviewer(BaseReviewer):
 
     def __init__(self, client: GeminiClient):
         self.client = client

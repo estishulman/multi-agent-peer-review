@@ -1,12 +1,12 @@
 from typing import Optional
-from ..LLM.gemini_client import GeminiClient
-from ..LLM.synthesis_client import AnswerSynthesisClient
-from ..tools.validation_engine import ValidationEngine
+from peer_review_mcp.LLM.chatgpt_client import ChatGPTClient
+from peer_review_mcp.LLM.synthesis_client import AnswerSynthesisClient
+
 
 class SynthesisEngine:
     def __init__(self):
-        gemini = GeminiClient()
-        self.synthesizer = AnswerSynthesisClient(gemini)
+        chatgpt = ChatGPTClient()  # אם כבר החלפת ל-ChatGPTClient – עדכני כאן
+        self.synthesizer = AnswerSynthesisClient(chatgpt)
 
     def answer(
         self,
@@ -17,13 +17,15 @@ class SynthesisEngine:
         if review_points is None:
             review_points = []
 
-        final_answer = self.synthesizer.synthesize(
+        result = self.synthesizer.synthesize(
             question=question,
             context_summary=context_summary,
             review_points=review_points,
         )
 
         return {
-            "answer": final_answer,
+            "answer": result["answer"],
+            "confidence": result["confidence"],
+            "needs_polish": result["needs_polish"],
             "review_count": len(review_points),
         }

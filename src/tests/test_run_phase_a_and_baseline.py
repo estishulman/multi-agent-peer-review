@@ -20,8 +20,8 @@ def test_run_phase_a_validate_tool_exception(monkeypatch):
 
     decision_log = []
     # When validate_tool fails, review_points should be empty
-    review_points, answer = co._run_phase_a("some question", None, decision_log)
+    review_points, synthesis = co._run_phase_a("some question", None, decision_log)
     assert review_points == []
-    assert answer == "synth"
+    assert synthesis["answer"] == "synth"
     assert any("review_points_count: 0" in s for s in decision_log)
 

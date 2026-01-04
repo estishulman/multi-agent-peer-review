@@ -1,7 +1,7 @@
 import logging
 from peer_review_mcp.LLM.gemini_client import GeminiClient
 from peer_review_mcp.models.polish_comment import PolishComment
-from peer_review_mcp.reviewers.gemini_reviewer import GeminiReviewer
+from peer_review_mcp.reviewers.RiskReviewer import RiskReviewer
 from peer_review_mcp.reviewers.base import BaseReviewer
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class PolishingEngine:
     def __init__(self):
         client = GeminiClient()
         self.reviewers: list[BaseReviewer] = [
-            GeminiReviewer(client),
+            RiskReviewer(client),
         ]
         logger.info("PolishingEngine initialized with %d reviewers", len(self.reviewers))
 

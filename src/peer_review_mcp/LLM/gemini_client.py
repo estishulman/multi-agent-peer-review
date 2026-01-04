@@ -29,31 +29,18 @@ class GeminiClient:
         return cls._instance
 
     def generate(self, prompt: str) -> str:
-        """
-        Generate content from Gemini API with timeout protection.
-
-        Args:
-            prompt: The prompt to send to the model
-
-        Returns:
-            The generated text response
-
-        Raises:
-            TimeoutError: If the API call exceeds the timeout
-        """
+        logger.info("Sending prompt to Gemini API: %s", prompt)
         try:
             response = self._client.models.generate_content(
                 model=self.model,
                 contents=prompt,
-                # Note: timeout support depends on genai library version
-                # If not supported, wrap in separate timeout logic
             )
+            logger.info("Received response from Gemini API: %s", response.text)
             return response.text
         except TimeoutError as e:
             logger.error("Gemini API call exceeded timeout of %ds", self.timeout)
             raise
-
-
-
-
+        except Exception as e:
+            logger.exception("Error during Gemini API call: %s", e)
+            raise
 

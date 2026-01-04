@@ -1,4 +1,4 @@
-from ..reviewers.base import BaseReviewer
+from .base import BaseReviewer
 from ..models.review_result import ReviewResult, ReviewMode
 from ..LLM.gemini_client import GeminiClient
 from ..prompts.validation import VALIDATION_PROMPT
@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class GeminiReviewer(BaseReviewer):
+class RiskReviewer(BaseReviewer):
 
     def __init__(self, client: GeminiClient):
         self.client = client

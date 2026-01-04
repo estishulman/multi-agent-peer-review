@@ -3,6 +3,11 @@ import truststore
 truststore.inject_into_ssl()
 from mcp.server.fastmcp import FastMCP
 from peer_review_mcp.orchestrator.central_orchestrator import CentralOrchestrator
+import logging
+
+# Initialize logger
+logger = logging.getLogger("PeerReviewServer")
+logging.basicConfig(level=logging.INFO)
 
 mcp = FastMCP(
     "Peer Review MCP",
@@ -15,16 +20,15 @@ _orchestrator = CentralOrchestrator()
 @mcp.tool(
     name="answer_with_peer_review",
     description=(
-        "Provides a peer-reviewed, verified answer to ensure correctness and reliability. "
-        "Use this tool when:\n"
-        "- The user asks for information that MUST be accurate, reliable, or trustworthy\n"
-        "- The user explicitly requests validation or high-confidence verification\n"
-        "- The topic requires careful consideration of edge cases or hidden assumptions\n"
-        "- You're uncertain about correctness and want multi-model validation\n"
+        "Provides a peer-reviewed, verified answer to maximize correctness and reliability. "
+        "Use this tool whenever accuracy matters or the question is complex, even if the user "
+        "did not explicitly request verification.\n"
         "\n"
-        "The tool performs structured peer review:\n"
-        "- Phase A (Always): Validates question for potential issues + generates answer\n"
-        "- Phase B (Conditional): Polishes answer if quality metrics indicate need\n"
+        "Use this tool when:\n"
+        "- The user asks for a precise, reliable, or verified answer\n"
+        "- The question is complex, multi-step, or requires careful reasoning\n"
+        "- The topic is high-stakes or sensitive, and mistakes would be costly\n"
+        "- You're uncertain about correctness and want structured peer review\n"
         "\n"
         "Parameters:\n"
         "- question (required): The user's original question\n"
@@ -39,8 +43,16 @@ _orchestrator = CentralOrchestrator()
     ),
 )
 async def answer_with_peer_review(question: str, context_summary: str = None) -> dict:
-    return await _orchestrator.process(question=question, context_summary=context_summary)
-
+    logger.info("Received question: %s", question)
+    if context_summary:
+        logger.info("Context summary provided: %s", context_summary)
+    try:
+        response = await _orchestrator.process(question=question, context_summary=context_summary)
+        logger.info("Orchestrator response: %s", response)
+        return response
+    except Exception as e:
+        logger.exception("Error during peer review process: %s", e)
+        raise
 
 
 def run() -> None:

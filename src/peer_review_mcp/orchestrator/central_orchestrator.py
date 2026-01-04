@@ -1,7 +1,6 @@
 import time
-from dataclasses import dataclass, field
-from typing import Optional, List
 import logging
+from typing import Optional, List
 
 from peer_review_mcp.tools.validate_tool import validate_tool
 from peer_review_mcp.tools.answer_tool import answer_tool
@@ -19,12 +18,13 @@ class CentralOrchestrator:
     Hybrid Orchestrator
 
     Phase A: validate -> answer (always run)
-    Phase B: optional polishing
+    Phase B: optional polishing (decision uses model self-assessment)
 
     Orchestrates a multi-phase peer review system:
     1. Validation: Identifies potential issues with the question
     2. Synthesis: Generates answer considering review points
-    3. Polishing: Optional improvement pass based on quality metrics
+       + model confidence & polish recommendation
+    3. Polishing: Optional improvement pass
     """
 
     def __init__(self):
@@ -33,24 +33,18 @@ class CentralOrchestrator:
         self.polish_llm = GeminiClient()
 
     async def process(self, *, question: str, context_summary: Optional[str] = None) -> dict:
-        """
-        Main orchestration entry point.
-
-        Args:
-            question: The user's question
-            context_summary: Optional short summary of relevant context (not full chat history!)
-        """
         t0 = time.time()
         decision_log: list[str] = []
 
         logger.info("Starting process for new question: %s", question[:100])
 
-        # Phase A – validation + synthesis (always run)
-        review_points, answer = self._run_phase_a(question, context_summary, decision_log)
+        # Phase A – validation + synthesis
+        review_points, synthesis = self._run_phase_a(
+            question, context_summary, decision_log
+        )
 
-        # If answer is None, the system failed - let the client's agent handle it
-        if answer is None:
-            logger.warning("Phase A failed to generate answer, returning None for client fallback")
+        if synthesis is None:
+            logger.warning("Phase A failed to generate answer")
             processing_time_ms = int((time.time() - t0) * 1000)
             self._log_decision_trace(decision_log, processing_time_ms)
             return {
@@ -58,90 +52,119 @@ class CentralOrchestrator:
                 "meta": {
                     "used_peer_review": False,
                     "review_points_count": len(review_points),
-                    "quality_score": None,
                     "polishing_applied": False,
                     "processing_time_ms": processing_time_ms,
-                    "error": "answer_generation_failed"
+                    "error": "answer_generation_failed",
                 },
             }
 
-        # Quality assessment
+        answer = synthesis["answer"]
+        confidence = synthesis.get("confidence", 0.8)
+        needs_polish = synthesis.get("needs_polish", False)
+
+        decision_log.append(f"model_confidence: {confidence}")
+        decision_log.append(f"model_requested_polish: {needs_polish}")
+
+        # Heuristic quality score (still useful as a secondary signal)
         quality_score = self._heuristic_quality_score(len(review_points))
         decision_log.append(f"quality_score_heuristic: {quality_score}")
-        logger.debug("Quality score calculated: %.2f", quality_score)
 
-        # Phase B – optional polishing
+        # Phase B decision
         should_polish, polish_reason = self._decide_phase_b(
             review_points_count=len(review_points),
             quality_score=quality_score,
+            model_confidence=confidence,
+            model_requested_polish=needs_polish,
         )
         decision_log.append(f"phase_b_decision: {should_polish} ({polish_reason})")
-        logger.debug("Phase B decision: polish=%s reason=%s", should_polish, polish_reason)
 
         if should_polish:
-            answer = self._run_phase_b(question, answer, context_summary, decision_log)
+            answer = self._run_phase_b(
+                question, answer, context_summary, decision_log
+            )
 
         processing_time_ms = int((time.time() - t0) * 1000)
         self._log_decision_trace(decision_log, processing_time_ms)
-
-        logger.info("Process complete in %dms", processing_time_ms)
 
         return {
             "answer": answer,
             "meta": {
                 "used_peer_review": True,
+                "confidence": confidence,
                 "review_points_count": len(review_points),
-                "quality_score": quality_score,
                 "polishing_applied": should_polish,
-                "processing_time_ms": processing_time_ms
+                "processing_time_ms": processing_time_ms,
             },
         }
 
-    def _run_phase_a(self, question: str, context_summary: Optional[str], decision_log: list[str]) -> tuple[List[ReviewPoint], str]:
-        """Phase A: Validate question and generate answer with context awareness."""
+    # Phase A
+
+    def _run_phase_a(
+        self,
+        question: str,
+        context_summary: Optional[str],
+        decision_log: list[str],
+    ) -> tuple[List[ReviewPoint], Optional[dict]]:
         logger.debug("Running Phase A for question: %s", question[:100])
 
-        # STEP 1: validate_tool gets QUESTION + CONTEXT_SUMMARY
-        review_points = []
+        # Step 1: validation
+        review_points: list[ReviewPoint] = []
         try:
             validation = validate_tool(question, context_summary)
             review_points = validation.get("items", [])
             if not isinstance(review_points, list):
-                logger.warning("validate_tool returned non-list items, defaulting to empty list")
                 review_points = []
-        except Exception as e:
-            logger.exception("validate_tool failed in _run_phase_a: %s", str(e))
+        except Exception:
+            logger.exception("validate_tool failed")
             review_points = []
 
         decision_log.append(f"review_points_count: {len(review_points)}")
-        logger.debug("Phase A validation complete: %d review points", len(review_points))
 
-        # STEP 2: answer_tool gets QUESTION + CONTEXT_SUMMARY + REVIEW_POINTS
-        answer = None
+        # Step 2: synthesis
         try:
-            result = answer_tool(
+            synthesis = answer_tool(
                 question=question,
                 context_summary=context_summary,
                 review_points=review_points,
             )
-            answer = result.get("answer")
-        except Exception as e:
-            logger.exception("answer_tool failed in _run_phase_a: %s", str(e))
-            decision_log.append(f"answer_tool_error: {type(e).__name__}")
-            answer = None  # ← Fallback: הן None, האיגנט יענה בעצמו
+        except Exception:
+            logger.exception("answer_tool failed")
+            return review_points, None
 
-        return review_points, answer
+        return review_points, synthesis
 
-    def _decide_phase_b(self, *, review_points_count: int, quality_score: float) -> tuple[bool, str]:
-        """Decide whether to apply polishing based on review and quality metrics."""
+    
+    # Phase B decision
+    
+    def _decide_phase_b(
+        self,
+        *,
+        review_points_count: int,
+        quality_score: float,
+        model_confidence: float,
+        model_requested_polish: bool,
+    ) -> tuple[bool, str]:
+
+        if model_requested_polish:
+            return True, "model_requested_polish"
+
+        if model_confidence < 0.85:
+            return True, "low_model_confidence"
+
         if review_points_count >= 6:
             return True, "many_review_points"
-        if quality_score < 0.9:
-            return True, "low_quality_score"
+
         return False, "good_enough"
 
-    def _run_phase_b(self, question: str, answer: str, context_summary: Optional[str], decision_log: list[str]) -> str:
-        """Phase B: Polish answer based on review suggestions."""
+    # Phase B execution
+    
+    def _run_phase_b(
+        self,
+        question: str,
+        answer: str,
+        context_summary: Optional[str],
+        decision_log: list[str],
+    ) -> str:
         logger.debug("Running Phase B polishing")
 
         comments = self.polishing_engine.review_for_polish(
@@ -150,7 +173,6 @@ class CentralOrchestrator:
             context_summary=context_summary,
         )
         decision_log.append(f"polish_comments_count: {len(comments)}")
-        logger.debug("Polish review complete: %d comments", len(comments))
 
         if not comments:
             return answer
@@ -167,8 +189,10 @@ class CentralOrchestrator:
         polished = self.polish_llm.generate(prompt).strip()
         return polished or answer
 
+    
+    # Helpers
+    
     def _heuristic_quality_score(self, review_points_count: int) -> float:
-        """Calculate quality score based on review points count."""
         if review_points_count <= 2:
             return 0.95
         if review_points_count <= 5:
@@ -178,12 +202,8 @@ class CentralOrchestrator:
         return 0.72
 
     def _log_decision_trace(self, decision_log: list[str], processing_time_ms: int):
-        """Log the full decision trace for debugging."""
         logger.info(
             "Decision trace: %s | processing_time_ms: %d",
             " | ".join(decision_log),
             processing_time_ms,
         )
-
-
-

@@ -1,1 +1,2 @@
 peer_review_mcp
+tests

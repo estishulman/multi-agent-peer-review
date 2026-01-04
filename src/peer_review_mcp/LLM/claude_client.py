@@ -22,18 +22,7 @@ class ClaudeClient:
         return cls._instance
 
     def generate(self, prompt: str) -> str:
-        """
-        Generate content from Claude API.
-
-        Args:
-            prompt: The prompt to send to the model
-
-        Returns:
-            The generated text response
-
-        Raises:
-            Exception: If the API call fails
-        """
+        logger.info("Sending prompt to Claude API: %s", prompt)
         try:
             message = self._client.messages.create(
                 model=self.model,
@@ -42,6 +31,7 @@ class ClaudeClient:
                     {"role": "user", "content": prompt}
                 ]
             )
+            logger.info("Received response from Claude API: %s", message.content[0].text)
             return message.content[0].text
         except Exception as e:
             logger.error("Claude API call failed: %s", str(e))

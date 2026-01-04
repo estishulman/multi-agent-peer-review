@@ -77,4 +77,15 @@ Prefer clear, accessible explanations over dense technical language.
 When helpful, use simple examples or analogies.
 Assume the user is intelligent but not necessarily an expert.
 
+
+After generating the final answer, internally assess its quality.
+
+Then output the result in the following JSON format ONLY:
+
+{
+  "answer": "<final answer>",
+  "confidence": 0.0-1.0,
+  "needs_polish": true|false
+}
+
 """
