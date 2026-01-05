@@ -51,12 +51,11 @@ class CentralOrchestrator:
                 "answer": None,
                 "meta": {
                     "used_peer_review": False,
-                    "review_points_count": len(review_points),
-                    "polishing_applied": False,
-                    "processing_time_ms": processing_time_ms,
-                    "error": "answer_generation_failed",
-                },
-            }
+                "review_points_count": len(review_points),
+                "polishing_applied": False,
+                "error": "answer_generation_failed",
+            },
+        }
 
         answer = synthesis["answer"]
         confidence = synthesis.get("confidence", 0.8)
@@ -93,7 +92,6 @@ class CentralOrchestrator:
                 "confidence": confidence,
                 "review_points_count": len(review_points),
                 "polishing_applied": should_polish,
-                "processing_time_ms": processing_time_ms,
             },
         }
 

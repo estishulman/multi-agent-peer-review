@@ -47,6 +47,9 @@ STYLE REQUIREMENTS:
 - Well-structured and pleasant to read.
 - Confident, precise, and balanced.
 - No meta-commentary or self-references.
+- Plain text only. Do not use Markdown, bullets, numbering, or formatting symbols
+  like *, _, `, or #. If you need to present multiple items, use full sentences
+  separated by commas or semicolons.
 
 QUALITY BAR:
 

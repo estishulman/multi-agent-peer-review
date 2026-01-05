@@ -2,6 +2,7 @@ import truststore
 
 truststore.inject_into_ssl()
 from mcp.server.fastmcp import FastMCP
+from typing import Optional
 from peer_review_mcp.orchestrator.central_orchestrator import CentralOrchestrator
 import logging
 
@@ -42,7 +43,7 @@ _orchestrator = CentralOrchestrator()
         "IMPORTANT: If answer is None, respond directly to the user without using this tool again."
     ),
 )
-async def answer_with_peer_review(question: str, context_summary: str = None) -> dict:
+async def answer_with_peer_review(question: str, context_summary: Optional[str] = None) -> dict:
     logger.info("Received question: %s", question)
     if context_summary:
         logger.info("Context summary provided: %s", context_summary)
