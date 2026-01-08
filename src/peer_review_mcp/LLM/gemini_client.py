@@ -7,6 +7,7 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
 
 from google import genai
+from google.genai import types
 from ..config import GEMINI_API_KEY, DEFAULT_MODEL
 from .limiter import llm_concurrency
 
@@ -32,7 +33,10 @@ class GeminiClient:  # Thin wrapper client for Google Gemini: send prompts and r
             cls._instance = super(GeminiClient, cls).__new__(cls)
             cls._instance.model = model
             cls._instance.timeout = timeout
-            cls._instance._client = genai.Client(api_key=GEMINI_API_KEY)
+            cls._instance._client = genai.Client(
+                api_key=GEMINI_API_KEY,
+                http_options=types.HttpOptions(timeout=timeout * 1000),
+            )
             logger.info("GeminiClient singleton initialized with model: %s, timeout: %ds",
                        model, timeout)
         return cls._instance

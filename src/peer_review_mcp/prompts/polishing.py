@@ -4,6 +4,7 @@ You are a precision reviewer.
 You are given:
 - the original question
 - an improved answer
+- relevant prior context
 
 Do NOT rewrite the answer fully.
 Only suggest:
@@ -18,4 +19,7 @@ Question:
 
 Answer:
 {answer}
+
+Context (optional, use if provided):
+{context}
 """

@@ -47,6 +47,7 @@ class PolishingEngine:  # Runs polishing reviewers and aggregates polish suggest
                 result = await reviewer.review(
                     question=question,
                     answer=answer,
+                    context_summary=context_summary,
                     mode="polish"  # Explicitly specify mode
                 )
                 if isinstance(result, ReviewResult):

@@ -202,7 +202,7 @@ class CentralOrchestrator:  # Orchestrates the multi-phase peer-review flow (val
         if model_confidence < 0.85:
             return True, "low_model_confidence"
 
-        if review_points_count >= 6:
+        if review_points_count >= 8:
             return True, "many_review_points"
 
         return False, "good_enough"

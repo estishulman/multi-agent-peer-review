@@ -1,7 +1,7 @@
 from typing import Optional
 from ..prompts.answer_synthesis import ANSWER_SYNTHESIS_PROMPT
 from peer_review_mcp.LLM.chatgpt_client import ChatGPTClient
-import json
+from peer_review_mcp.llm_parsing import try_parse_json, strip_markdown
 import logging
 
 logger = logging.getLogger(__name__)
@@ -54,20 +54,18 @@ class SynthesisEngine:  # Builds synthesis prompts, calls LLM to generate final 
         # Send the prompt to the LLM and retrieve the raw response
         raw = await self.client.generate_async(prompt)  # Timeout handling is managed by ChatGPTClient
 
-        try:
-            # Note: stripping code fences before json.loads is recommended, but
-            # parsing is attempted directly; if it fails a defensive fallback is used.
-            data = json.loads(raw)
+        data = try_parse_json(raw)
+        if isinstance(data, dict) and "answer" in data:
             return {
-                "answer": data["answer"],
+                "answer": strip_markdown(str(data["answer"])),
                 "confidence": float(data.get("confidence", 0.8)),
                 "needs_polish": bool(data.get("needs_polish", False)),
             }
-        except Exception:
+        else:
             # Log an error and return a fallback response if parsing fails
             logger.exception("Failed to parse synthesis JSON, falling back to raw answer")
             return {
-                "answer": raw.strip(),
+                "answer": strip_markdown(raw.strip()),
                 "confidence": 0.5,  # Default confidence for fallback
                 "needs_polish": True,  # Assume polishing is needed
             }

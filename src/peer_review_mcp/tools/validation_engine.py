@@ -40,8 +40,14 @@ class ValidationEngine:  # Aggregates multiple reviewers to validate a question 
                 # Each reviewer processes the question and context to generate review points
                 result = await reviewer.review(
                     question=question,
-                    answer=context_summary,  # Pass context as "answer" to reviewers
+                    answer=None,
+                    context_summary=context_summary,
                     mode="validate",
+                )
+                logger.debug(
+                    "Reviewer %s returned %d items",
+                    type(reviewer).__name__,
+                    len(getattr(result, "items", []) or []),
                 )
 
                 # Process each item returned by the reviewer

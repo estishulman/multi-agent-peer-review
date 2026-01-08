@@ -25,8 +25,8 @@ class ChatGPTClient:  # Thin wrapper client for OpenAI ChatGPT: send prompts and
             cls._instance = super(ChatGPTClient, cls).__new__(cls)
             cls._instance.model = model
             cls._instance.timeout = timeout
-            cls._instance._client = OpenAI(api_key=CHATGPT_API_KEY)
-            cls._instance._async_client = AsyncOpenAI(api_key=CHATGPT_API_KEY)
+            cls._instance._client = OpenAI(api_key=CHATGPT_API_KEY, timeout=timeout)
+            cls._instance._async_client = AsyncOpenAI(api_key=CHATGPT_API_KEY, timeout=timeout)
             logger.info("ChatGPTClient singleton initialized with model: %s, timeout: %ds",
                        model, timeout)
         return cls._instance

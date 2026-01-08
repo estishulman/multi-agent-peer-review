@@ -3,7 +3,7 @@ from ..models.review_result import ReviewResult, ReviewMode
 from ..LLM.gemini_client import GeminiClient
 from ..prompts.validation import VALIDATION_PROMPT
 from ..prompts.polishing import POLISHING_PROMPT
-import json
+from ..llm_parsing import try_parse_json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,21 +19,23 @@ class RiskReviewer(BaseReviewer):  # Reviewer that identifies risk/validation it
         *,
         question: str,
         answer: str | None = None,
+        context_summary: str | None = None,
         mode: ReviewMode
     ) -> ReviewResult:
 
         if mode == "validate":
-            # In validate mode, the answer parameter contains context_summary
-            context_text = answer if answer else "(No context)"
+            context_text = context_summary if context_summary else "(No context)"
             prompt = VALIDATION_PROMPT.format(question=question, answer=context_text)
 
         elif mode == "polish":
             # In polish mode, an answer must be provided
             if answer is None:
                 raise ValueError("Polish mode requires an answer")
+            context_text = context_summary if context_summary else "(No context)"
             prompt = POLISHING_PROMPT.format(
                 question=question,
-                answer=answer
+                answer=answer,
+                context=context_text,
             )
 
         else:
@@ -63,25 +65,15 @@ class RiskReviewer(BaseReviewer):  # Reviewer that identifies risk/validation it
 
     def _parse_json_items(self, text: str) -> list[dict]:
         """Parse JSON array of review points with classification."""
-        try:
-            # Extract JSON from response
-            text = text.strip()
-            if text.startswith("```json"):
-                text = text[7:]
-            if text.startswith("```"):
-                text = text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-
-            data = json.loads(text.strip())
-            if not isinstance(data, list):
+        data = try_parse_json(text)
+        if not isinstance(data, list):
+            if data is not None:
                 logger.warning("Expected JSON array, got: %s", type(data))
-                return self._fallback_parse(text)
-
-            return data
-        except json.JSONDecodeError as e:
-            logger.warning("Failed to parse JSON from reviewer: %s", e)
+            else:
+                logger.warning("Failed to parse JSON from reviewer")
             return self._fallback_parse(text)
+
+        return data
 
     def _fallback_parse(self, text: str) -> list[dict]:
         """Fallback: parse bullet list and create dict structure."""

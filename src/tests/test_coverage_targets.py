@@ -55,11 +55,11 @@ async def test_server_answer_with_peer_review_success(monkeypatch):
 @pytest.mark.anyio
 async def test_validation_engine_reviewer_failure():
     class GoodReviewer:
-        async def review(self, *, question, answer, mode):
+        async def review(self, *, question, answer, context_summary, mode):
             return ReviewResult(mode=mode, items=[{"text": "x", "risk_type": "other", "severity": "low"}])
 
     class BadReviewer:
-        async def review(self, *, question, answer, mode):
+        async def review(self, *, question, answer, context_summary, mode):
             raise Exception("boom")
 
     engine = ValidationEngine()

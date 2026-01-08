@@ -40,7 +40,7 @@ async def test_synthesis_engine_format_and_call(monkeypatch):
 async def test_polishing_engine_parses(monkeypatch):
     # stub reviewer to return a ReviewResult-like object
     class FakeReviewer:
-        async def review(self, question, answer, mode):
+        async def review(self, question, answer, context_summary, mode):
             return ReviewResult(mode="polish", items=["- fix this", "• another"])
 
     pe = PolishingEngine()
@@ -59,7 +59,7 @@ async def test_gemini_reviewer_parsing(monkeypatch):
             return "- one\n- two"
 
     gr = RiskReviewer(StubClient())
-    res = await gr.review(question="q", mode="validate")
+    res = await gr.review(question="q", mode="validate", context_summary=None)
     assert hasattr(res, 'items')
     # In validate mode, items should now be dicts with classification
     assert len(res.items) == 2
@@ -72,7 +72,7 @@ def test_central_orchestrator_phase_b_decision():
     co = CentralOrchestrator()
     # many review points -> should polish
     should, reason = co._decide_phase_b(
-        review_points_count=6,
+        review_points_count=8,
         quality_score=0.95,
         model_confidence=0.95,
         model_requested_polish=False,

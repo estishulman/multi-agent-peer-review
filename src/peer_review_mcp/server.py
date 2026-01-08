@@ -1,4 +1,5 @@
 import truststore
+import os
 
 truststore.inject_into_ssl()
 from mcp.server.fastmcp import FastMCP
@@ -8,7 +9,7 @@ import logging
 
 # Initialize logger
 logger = logging.getLogger("PeerReviewServer")
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
 
 mcp = FastMCP(
     "Peer Review MCP",
@@ -35,9 +36,9 @@ _orchestrator = CentralOrchestrator()
         "MUST call this tool if the user explicitly requests verification or asks you to check your answer.\n"
         "\n"
         "Parameters:\n"
-        "- question (required): The user's original question\n"
-        "- context_summary (optional): Brief summary of relevant prior context, if any. "
-        "Do NOT send full chat history. Only include relevant background that affects the answer.\n"
+        "- question (required): The user's original question, quoted verbatim\n"
+        "- context_summary (optional): Brief summary of prior context only. Do NOT repeat or paraphrase the question. "
+        "Do NOT send full chat history. Include only background that affects the answer.\n"
         "\n"
         "Returns:\n"
         "- answer: Peer-reviewed answer (str), or None if system cannot verify\n"

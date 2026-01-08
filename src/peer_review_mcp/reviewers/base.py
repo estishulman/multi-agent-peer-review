@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from ..models.review_result import ReviewResult, ReviewMode
 
-class BaseReviewer(ABC):  # Base interface for reviewers; `answer` param acts as context in validate mode
+class BaseReviewer(ABC):  # Base interface for reviewers
 
     @abstractmethod
     async def review(
@@ -9,6 +9,7 @@ class BaseReviewer(ABC):  # Base interface for reviewers; `answer` param acts as
         *,
         question: str,
         answer: str | None,
+        context_summary: str | None,
         mode: ReviewMode
     ) -> ReviewResult:
         """
@@ -16,8 +17,8 @@ class BaseReviewer(ABC):  # Base interface for reviewers; `answer` param acts as
 
         Args:
             question: The original user question.
-            answer: In `mode=='polish'` this is the answer to inspect; in `mode=='validate'`
-                this parameter is used to pass a context summary (not a literal answer).
+            answer: In `mode=='polish'` this is the answer to inspect; otherwise None.
+            context_summary: Optional prior context; used in validate and can be used in polish.
             mode: Either 'validate' or 'polish' (see concrete reviewers).
 
         Returns:

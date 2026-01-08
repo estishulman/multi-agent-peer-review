@@ -2,7 +2,7 @@ from .base import BaseReviewer
 from ..models.review_result import ReviewResult, ReviewMode
 from ..LLM.gemini_client import GeminiClient
 from ..prompts.clarity_validation import CLARITY_VALIDATION_PROMPT
-import json
+from ..llm_parsing import try_parse_json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ class ClarityReviewer(BaseReviewer):  # Reviewer that checks clarity and extract
         *,
         question: str,
         answer: str | None = None,
+        context_summary: str | None = None,
         mode: ReviewMode
     ) -> ReviewResult:
 
@@ -41,15 +42,7 @@ class ClarityReviewer(BaseReviewer):  # Reviewer that checks clarity and extract
 
     def _parse_json_items(self, text: str) -> list[dict]:
         """Parse JSON array of review points with classification."""
-        text = text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-
-        data = json.loads(text.strip())
+        data = try_parse_json(text)
         if not isinstance(data, list):
             raise ValueError(f"Expected list, got {type(data)}")
         return data
