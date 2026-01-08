@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ClarityReviewer(BaseReviewer):
+class ClarityReviewer(BaseReviewer):  # Reviewer that checks clarity and extracts validation points
 
     def __init__(self, client: GeminiClient):
         self.client = client
 
-    def review(
+    async def review(
         self,
         *,
         question: str,
@@ -26,7 +26,7 @@ class ClarityReviewer(BaseReviewer):
 
         prompt = CLARITY_VALIDATION_PROMPT.format(question=question)
 
-        raw_text = self.client.generate(prompt)
+        raw_text = await self.client.generate_async(prompt)
 
         items = self._parse_items(raw_text)
 
@@ -56,6 +56,7 @@ class ClarityReviewer(BaseReviewer):
 
     def _parse_bullet_list(self, text: str) -> list[dict]:
         """Fallback: parse bullet list and create dict structure."""
+        # Defaults reflect a safe, medium-risk classification for unstructured output.
         return [
             {
                 "text": line.strip("-• ").strip(),

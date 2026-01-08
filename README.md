@@ -13,6 +13,7 @@ This project replaces that workflow with an automated peer-review pipeline that 
 ## Overview
 Rather than trusting a single model response, the system introduces independent review agents, a synthesis step, and a central orchestrator that manages decision flow and quality gates.
 The system is designed to produce more reliable answers through validation and review by additional agents, turning answer generation from a single-agent response into a controlled multi-agent process.
+The pipeline is fully asynchronous to prevent blocking during concurrent LLM calls.
 
 ## Core Philosophy: Cautious Answer Generation
 Answer generation is treated as unsafe by default:
@@ -57,7 +58,9 @@ Create a `.env` file in the project root:
 OPENAI_API_KEY=your_openai_api_key_here
 GEMINI_API_KEY=your_gemini_api_key_here
 CLAUDE_API_KEY=your_claude_api_key_here
+LLM_MAX_CONCURRENCY=your_limit_here
 ```
+`LLM_MAX_CONCURRENCY` limits how many LLM calls run in parallel. Use `0` for unlimited.
 
 ### Run the MCP Server
 ```powershell
@@ -96,6 +99,7 @@ Working with an agent whose outputs were reviewed and validated through the serv
 - Reviewer composition and execution order
 - Prompt templates used by reviewers and synthesis agents
 - System behavior under failure conditions
+- Optional concurrency limit for LLM calls via `LLM_MAX_CONCURRENCY`
 
 ## Limitations
 The system delivers significantly higher reliability than single-agent approaches, while remaining an automated system.

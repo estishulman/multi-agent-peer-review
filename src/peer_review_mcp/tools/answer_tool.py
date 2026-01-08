@@ -5,7 +5,7 @@ from peer_review_mcp.models.review_point import ReviewPoint
 _engine = SynthesisEngine()
 
 
-def answer_tool(
+async def answer_tool(
     *,
     question: str,
     context_summary: Optional[str] = None,
@@ -33,7 +33,7 @@ def answer_tool(
         else:
             review_point_texts.append(str(point))
 
-    return _engine.answer(
+    return await _engine.answer(
         question=question,
         context_summary=context_summary,
         review_points=review_point_texts,

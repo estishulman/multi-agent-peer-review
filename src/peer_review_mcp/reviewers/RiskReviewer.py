@@ -9,12 +9,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class RiskReviewer(BaseReviewer):
+class RiskReviewer(BaseReviewer):  # Reviewer that identifies risk/validation items and polish suggestions
 
     def __init__(self, client: GeminiClient):
         self.client = client
 
-    def review(
+    async def review(
         self,
         *,
         question: str,
@@ -23,11 +23,12 @@ class RiskReviewer(BaseReviewer):
     ) -> ReviewResult:
 
         if mode == "validate":
-            # For validate mode, answer parameter contains context_summary
+            # In validate mode, the answer parameter contains context_summary
             context_text = answer if answer else "(No context)"
             prompt = VALIDATION_PROMPT.format(question=question, answer=context_text)
 
         elif mode == "polish":
+            # In polish mode, an answer must be provided
             if answer is None:
                 raise ValueError("Polish mode requires an answer")
             prompt = POLISHING_PROMPT.format(
@@ -36,12 +37,16 @@ class RiskReviewer(BaseReviewer):
             )
 
         else:
+            # Raise an error for unsupported modes
             raise ValueError(f"Unknown mode: {mode}")
 
-        raw_text = self.client.generate(prompt)
+        # Generate raw text using the client based on the constructed prompt
+        raw_text = await self.client.generate_async(prompt)
+        return self._parse_result(raw_text, mode)  # Pass mode explicitly
 
+    def _parse_result(self, raw_text: str, mode: ReviewMode) -> ReviewResult:
+        """Parse the raw text result into structured review items."""
         items = self._parse_items(raw_text, mode)
-
         return ReviewResult(mode=mode, items=items)
 
     def _parse_items(self, text: str, mode: ReviewMode) -> list[dict | str]:
@@ -80,6 +85,7 @@ class RiskReviewer(BaseReviewer):
 
     def _fallback_parse(self, text: str) -> list[dict]:
         """Fallback: parse bullet list and create dict structure."""
+        # Conservative defaults preserve a structured shape when JSON parsing fails.
         return [
             {
                 "text": line.strip("-• ").strip(),

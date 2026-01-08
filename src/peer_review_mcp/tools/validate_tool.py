@@ -4,7 +4,7 @@ from peer_review_mcp.tools.validation_engine import ValidationEngine
 _engine = ValidationEngine()
 
 
-def validate_tool(question: str, context_summary: Optional[str] = None) -> dict:
+async def validate_tool(question: str, context_summary: Optional[str] = None) -> dict:
     """
     MCP tool entrypoint.
     Validates question considering context.
@@ -16,4 +16,4 @@ def validate_tool(question: str, context_summary: Optional[str] = None) -> dict:
     Returns:
         Dictionary with 'items' containing list of ReviewPoint objects
     """
-    return _engine.validate(question, context_summary)
+    return await _engine.validate(question, context_summary)

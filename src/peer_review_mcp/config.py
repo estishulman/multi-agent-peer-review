@@ -15,3 +15,9 @@ CLAUDE_MODEL = "claude-3-5-sonnet-20241022"
 CHATGPT_API_KEY = os.getenv("OPENAI_API_KEY")
 CHATGPT_MODEL = "gpt-4o-mini"
 
+# Concurrency limits
+try:
+    LLM_MAX_CONCURRENCY = int(os.getenv("LLM_MAX_CONCURRENCY", "0") or "0")
+except ValueError:
+    LLM_MAX_CONCURRENCY = 0
+
